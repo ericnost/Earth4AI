@@ -1,0 +1,76 @@
+<script src="https://apis.google.com/js/api.js"></script>
+<script>
+  /**
+   * Sample JavaScript code for search.cse.list
+   * See instructions for running APIs Explorer code samples locally:
+   * https://developers.google.com/explorer-help/guides/code_samples#javascript
+   */
+
+  function loadClient() {
+    console.log("loading...")
+    gapi.client.setApiKey("####"); /* Add your API key here */
+    return gapi.client.load("https://content.googleapis.com/discovery/v1/apis/customsearch/v1/rest")
+        .then(function() { 
+          console.log("GAPI client loaded for API"); 
+          document.getElementById("results").innerHTML = "Search engine loaded!!!!"
+        },
+          function(err) { 
+            console.error("Error loading GAPI client for API", err); 
+            document.getElementById("results").innerHTML = err["error"]["message"]
+          });
+    
+  }
+
+  // Make sure the client is loaded before calling this method.
+  function execute(start) {
+      var q = document.getElementById("input").value;
+      console.log(start, q)
+      return gapi.client.search.cse.list({
+        "cx": "####", /* Add yours here */
+        //"exactTerms": "digital conservation", //optional
+        "orTerms": "transformation", //optional
+        "q": q,
+        "access_token": "####", /* Add your Access Token here */
+        "start": start
+      }).then(function(response) {
+            // Handle the results here (response.result has the parsed body).
+            console.log("Response", response);
+            // export response.result to json file
+            dataStr = JSON.stringify(response.result);
+            dataUri = 'data:application/json;charset=utf-8,'+ encodeURIComponent(dataStr);
+            exportFileDefaultName = q+'_'+start.toString()+'.json';
+            // automate the export by creating a "link" and "clicking" on it
+            linkElement = document.createElement('a');
+            linkElement.setAttribute('href', dataUri);
+            linkElement.setAttribute('download', exportFileDefaultName);
+            linkElement.click();
+            // Print out status to the page
+            document.getElementById("results").innerHTML = "Results starting at "+start+" for "+q
+            // Loop back until we've hit the max # of search results
+            start += 10
+            if (start < 100){
+              execute(start)
+            }
+          },
+          function(err) { 
+            console.error("Execute error", err);
+            document.getElementById("results").innerHTML = err["result"]["error"]["message"] 
+          });
+  }
+
+  gapi.load("client");
+
+</script>
+
+First, load our search engine: <button onclick="loadClient()">load</button>
+<hr>
+<p>Then, enter in your search terms, just like you would in Google, and click "Search"
+<form id="query">
+  <label for="input">Search terms:</label><br>
+  <input type="text" id="input" name="input"><br>
+</form>
+<button value="Search" onclick="execute(1)">Search</button>
+You can try new search terms without clicking "load"
+<hr>
+<h1>Results</h1>
+<div id="results"></div>
